@@ -1,0 +1,12 @@
+*.pyc
+__pycache__/
+*.npy
+*.npz
+*.fits
+*.png
+*.pdf
+*.jpg
+*.JPG
+pipeline_out/
+test_*/
+*.DS_Store
