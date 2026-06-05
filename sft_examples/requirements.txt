@@ -1,3 +1,0 @@
-sftransform>=0.2.0
-torch>=2.0
-numpy>=1.24
