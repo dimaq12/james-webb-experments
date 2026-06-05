@@ -1,4 +1,3 @@
-import sys; sys.path.insert(0, '/home/dima/FA/sft_torch')
 import numpy as np
 from astropy.io import fits
 import torch, sft_torch as sft

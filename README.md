@@ -1,88 +1,101 @@
-# sft_torch Universal Spectral Analysis Pipeline
+# james-webb-experments
 
-Анализ любого изображения через спектральный оператор sft_torch:
-κ_W, Tail α, Ω-вектор, итерированные остатки.
+Spectral Flow Transform (SFT) analysis of JWST deep-field and cluster images.
+Universal pipeline for extracting hidden spectral-geometric structure from any image:
+κ_W curvature, tail exponent α, Omega vector diagnostics, iterated residuals.
 
-## Установка
+## Install
 
 ```bash
-pip install torch numpy scipy matplotlib pillow astropy
-# sft_torch из соседней директории:
-export PYTHONPATH=/home/dima/FA/sft_torch:$PYTHONPATH
+pip install -r requirements.txt
 ```
 
-## Быстрый старт
+## Quick Start
 
 ```bash
-# Анализ фото
+# Analyze a photo
 python sft_pipeline.py photo.jpg
 
-# Анализ FITS (JWST/HST)
-python sft_pipeline.py jwst_image.fits --residual-depth 3
+# Analyze JWST FITS with 3-level residual regression
+python sft_pipeline.py image.fits --residual-depth 3
 
-# Скачать JWST данные
+# Download JWST data from MAST
 python download_jwst.py smacs --filter f090w --outdir data/
-python sft_pipeline.py data/jw02736-o001_t001_nircam_clear-f090w_i2d.fits
 ```
 
-## Параметры
+## Pipeline Flags
 
-| Флаг | По умолчанию | Описание |
+| Flag | Default | Description |
 |---|---|---|
-| `--residual-depth, -d` | 2 | Глубина итерированной регрессии (0–3) |
-| `--max-regions, -n` | 300 | Максимум сканируемых блоков |
-| `--stride, -s` | 80 | Шаг сканирования (пиксели) |
-| `--region-size, -r` | 80 | Размер блока (пиксели) |
-| `--n-grid` | 10 | Размер операторной сетки |
-| `--m-params` | 5 | Число базисных параметров M |
-| `--output-dir, -o` | `pipeline_out/` | Директория вывода |
+| `--residual-depth, -d` | 2 | Iterated regression depth (0–3) |
+| `--max-regions, -n` | 200 | Max scanned blocks |
+| `--stride, -s` | 64 | Scan stride (pixels) |
+| `--region-size, -r` | 64 | Block size (pixels) |
+| `--n-grid` | 8 | Operator grid size N |
+| `--m-params` | 4 | Basis parameters M |
+| `--perturbation` | off | Use perturbation kappa (slower, more accurate) |
+| `--output-dir, -o` | `pipeline_out/` | Output directory |
 
-## Выходные файлы
+## Outputs
 
 ```
 pipeline_out/
-├── image_metrics.json    # Все метрики (κ_W, α, Ω, R², ...)
-└── image_reveal.png      # Визуализация: оригинал + κ_W + остатки
+├── image_metrics.json    # All metrics (κ_W, α, Ω, R² layers)
+└── image_reveal.png      # Original + κ_W overlay + residual maps
 ```
 
-## Формат metrics.json
+## Metrics
 
-```json
-{
-  "n_regions": 250,
-  "kappa_W": {"min": 126, "max": 284, "mean": 257, "std": 22, "cv": 0.084},
-  "alpha":    {"min": 0.734, "max": 2.528, "mean": 0.866, "std": 0.172, "cv": 0.199},
-  "omega_norm": {"min": 0.068, "max": 0.477, "mean": 0.097, "std": 0.047, "cv": 0.489},
-  "cumulative_R2": 0.928,
-  "compression_ratio": 0.268,
-  "regression": {
-    "L0: κ_W ~ яркость+контраст": {"R2": 0.798, "delta": 0.798},
-    "L1: resid0 ~ α+Ω+спектр+позиция": {"R2": 0.489, "delta": 0.099},
-    "L2: resid1 ~ границы спектра+gap": {"R2": 0.305, "delta": 0.031}
-  }
-}
-```
-
-## Метрики
-
-| Метрика | Описание |
+| Name | Description |
 |---|---|
-| **κ_W** | Спектральная кривизна оператора W |
-| **Tail α** | Показатель степенного хвоста спектра |
-| **Ω vector** | Омега-вектор хвостовой диагностики (4 компоненты) |
-| **\|\|Ω\|\|** | Норма омега-вектора |
-| **cv(α)** | Коэффициент вариации α — спектральная гетерогенность |
-| **cv(\|\|Ω\|\|)** | Пространственная вариация Ω-нормы |
-| **Cumulative R²** | Доля объяснённой дисперсии κ_W |
+| **κ_W** | Spectral curvature of the W-operator |
+| **α** | Tail exponent of the eigenvalue spectrum |
+| **Ω** | Omega vector — multi-scale tail diagnostic (4 components) |
+| **\|\|Ω\|\|** | Omega vector norm |
+| **cv(α)** | Coefficient of variation of α — spectral heterogeneity index |
+| **cv(\|\|Ω\|\|)** | Spatial variation of Omega norm |
+| **Cumulative R²** | Total explained variance of κ_W across regression layers |
 | **Compression ratio** | σ(residual_final) / σ(κ_W) |
 
-## Download JWST
+## Download JWST Images
 
 ```bash
-python download_jwst.py list                    # список программ
-python download_jwst.py smacs --list            # файлы SMACS 0723
-python download_jwst.py ceers --filter f277w    # скачать CEERS F277W
-python download_jwst.py nebula --outdir data/   # Southern Ring Nebula
+python download_jwst.py list              # list available programs
+python download_jwst.py smacs --list       # list SMACS 0723 files
+python download_jwst.py ceers --filter f277w  # download CEERS deep field
+python download_jwst.py nebula --outdir data/  # Southern Ring Nebula
 ```
 
-Поддерживаемые программы: `smacs`, `ceers`, `nebula`. HUDF — внешний файл, скачивается отдельно.
+Supported targets: `smacs`, `ceers`, `nebula`.
+HUDF requires external download.
+
+## Published Data Points
+
+Analysis of 14 measurements across real and synthetic image fields:
+
+| Field | cv(α) | Category |
+|---|---|---|
+| Empty sky (synthetic) | 0.002 | uniform |
+| HUDF JWST (ultra-deep) | 0.003 | uniform |
+| Clouds (synthetic) | 0.056 | natural |
+| Forest-like (synthetic) | 0.044 | natural |
+| City blocks (synthetic) | 0.071 | natural |
+| DSCF1809 (outdoor photo) | 0.078 | natural |
+| IMG_2169 (complex photo) | 0.099 | natural |
+| CEERS JWST (wide survey) | 0.143 | rich structure |
+| SMACS F200W (cluster) | 0.158 | rich structure |
+| Southern Ring Nebula | 0.185 | rich structure |
+| SMACS F090W (cluster) | 0.199 | rich structure |
+
+cv(α) — the coefficient of variation of the tail exponent — appears to measure
+**spectral heterogeneity**: how much the local spectral regime varies across an image.
+It orders fields from empty/uniform (cv ≈ 0.001–0.01) through natural scenes
+(cv ≈ 0.03–0.10) to morphologically rich astronomical fields (cv ≈ 0.14–0.20).
+
+## License
+
+MIT License — see [LICENSE](LICENSE).
+
+The Spectral Flow Transform method originates from:
+*"Spectral Flow on the space of operators"*, D. Sierikov, 2025.
+Please cite this reference when using κ_W, α, or Ω diagnostics.

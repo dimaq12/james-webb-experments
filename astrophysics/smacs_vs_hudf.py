@@ -37,7 +37,6 @@ ht_gj = np.array([p[1] for p in ht_pos])
 # DSCF1809 from earlier scan — reuse iterated_residuals.py data
 # We computed it in iterated_residuals_viz.py; just quick approximate here
 from PIL import Image
-import sys; sys.path.insert(0, '/home/dima/FA/sft_torch')
 import torch, sft_torch as sft
 
 # quick helper
